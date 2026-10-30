@@ -235,6 +235,7 @@ type downloadModel struct {
 	completeOffset int
 	completeAction int
 	sendToKindle   bool
+	sendOnComplete bool
 	kindleMessage  string
 	err            error
 	downloadCh     chan tea.Msg
@@ -402,7 +403,7 @@ func (m downloadModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.savedSize = msg.size
 		m.state = stateComplete
-		if m.stayOnComplete {
+		if m.stayOnComplete && !m.sendOnComplete {
 			return m, nil
 		}
 		return m, tea.Quit

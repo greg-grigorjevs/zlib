@@ -52,7 +52,7 @@ func newBookFeedCommand(name, description, summary string, load func(*zlib.Clien
 					return err
 				}
 				sendToKindle, _ := cmd.Flags().GetBool("send-to-kindle")
-				return runDownload(newDownloadModel(selected.selectedID, dir, c), sendToKindle, cmd)
+				return runDownload(newDownloadModel(selected.selectedID, dir, c), sendToKindle || selected.sendToKindle, cmd)
 			}
 
 			books, err := fetch()

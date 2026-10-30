@@ -36,11 +36,11 @@ var searchCmd = &cobra.Command{
 			if err != nil {
 				return err
 			}
-			selectedID, err := interactiveSearch(c, opts, fullTitle)
+			selected, err := interactiveSearch(c, opts, fullTitle)
 			if err != nil {
 				return err
 			}
-			if selectedID == "" {
+			if selected.selectedID == "" {
 				return nil
 			}
 			dir, err := destDirFlag(cmd)
@@ -49,7 +49,7 @@ var searchCmd = &cobra.Command{
 			}
 			sendToKindle, _ := cmd.Flags().GetBool("send-to-kindle")
 
-			return runDownload(newDownloadModel(selectedID, dir, c), sendToKindle, cmd)
+			return runDownload(newDownloadModel(selected.selectedID, dir, c), sendToKindle || selected.sendToKindle, cmd)
 		}
 
 		query := strings.Join(args, " ")

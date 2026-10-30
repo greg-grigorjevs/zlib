@@ -218,6 +218,12 @@ func (m searchSelectModel) feedViewWith(column, empty, status, navigation string
 			help = "↑/↓ select · ←/→ page · enter download · " + m.listAction + " · " + m.exitHint()
 		}
 	}
+	if m.listAction == "" {
+		help = strings.Replace(help, " · "+m.exitHint(), " · Ctrl+K Kindle · "+m.exitHint(), 1)
+		if ansi.StringWidth(help) > width {
+			help = "enter · Ctrl+K Kindle · " + m.exitHint()
+		}
+	}
 	if m.state == searchStateFilter {
 		help = "enter search · esc cancel"
 	}

@@ -45,6 +45,7 @@ type searchSelectModel struct {
 	reducedMotion   bool
 	selectedID      string // set when user presses Enter
 	confirmDownload bool
+	sendToKindle    bool
 	downloadFocused bool
 	err             error
 	retryPage       int
@@ -217,12 +218,14 @@ func (m searchSelectModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.downloadFocused = !m.downloadFocused
 			case "esc", "ctrl+c", "n":
 				m.confirmDownload = false
+				m.sendToKindle = false
 			case "enter":
 				m.confirmDownload = false
 				if m.downloadFocused {
 					m.selectedID = bookCommandID(m.books[m.cursor])
 					return m, tea.Quit
 				}
+				m.sendToKindle = false
 			}
 			return m, nil
 		}
@@ -272,11 +275,12 @@ func (m searchSelectModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.loadingPage = m.page + 1
 					return m, m.loadPage(m.loadingPage)
 				}
-			case "enter":
+			case "enter", "ctrl+k":
 				if len(m.books) > 0 && m.cursor < len(m.books) {
 					id := bookCommandID(m.books[m.cursor])
 					if id != "" {
 						m.confirmDownload = true
+						m.sendToKindle = msg.String() == "ctrl+k"
 						m.downloadFocused = false
 						return m, nil
 					}
@@ -341,7 +345,11 @@ func (m searchSelectModel) View() tea.View {
 	}
 	if m.confirmDownload {
 		book := m.books[m.cursor]
-		v.Content = confirmationDialog(v.Content, m.width, m.height, "Download book?", book.Name, bookCommandID(book), "", "Download", m.downloadFocused, false)
+		title, action := "Download book?", "Download"
+		if m.sendToKindle {
+			title, action = "Download and send to Kindle?", "Send"
+		}
+		v.Content = confirmationDialog(v.Content, m.width, m.height, title, book.Name, bookCommandID(book), "", action, m.downloadFocused, false)
 		v.AltScreen = true
 	}
 	return fullScreenView(m.width, m.height, v.Content)
@@ -392,13 +400,13 @@ func (m searchSelectModel) listView() tea.View {
 
 // interactiveSearch runs the filter form and then the result list. The caller
 // loads c first, so a signed-out user never fills in the form for nothing.
-func interactiveSearch(c *zlib.Client, opts *zlib.SearchOptions, fullTitle bool) (string, error) {
+func interactiveSearch(c *zlib.Client, opts *zlib.SearchOptions, fullTitle bool) (searchSelectModel, error) {
 	form, err := runSearchFilterForm(newSearchFilterForm("", opts))
 	if err != nil {
-		return "", err
+		return searchSelectModel{}, err
 	}
 	if !form.accepted {
-		return "", nil
+		return searchSelectModel{}, nil
 	}
 	query := form.query
 	opts = form.searchOptions()
@@ -406,14 +414,14 @@ func interactiveSearch(c *zlib.Client, opts *zlib.SearchOptions, fullTitle bool)
 	p := tea.NewProgram(newSearchSelectModel(query, c, opts, fullTitle))
 	result, err := p.Run()
 	if err != nil {
-		return "", err
+		return searchSelectModel{}, err
 	}
 
 	sm := result.(searchSelectModel)
 	if sm.err != nil {
-		return "", sm.err
+		return sm, sm.err
 	}
-	return sm.selectedID, nil
+	return sm, nil
 }
 
 // errorBody wraps a request error to the terminal width instead of cutting
