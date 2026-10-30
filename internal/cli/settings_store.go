@@ -15,7 +15,9 @@ import (
 	"github.com/joho/godotenv"
 )
 
-var settingKeys = []string{zlib.EnvDomain, zlib.EnvProxy, downloadDirEnvVar, zlib.EnvRetries}
+const defaultFormatEnvVar = "ZLIB_DEFAULT_FORMAT"
+
+var settingKeys = []string{zlib.EnvDomain, zlib.EnvProxy, downloadDirEnvVar, zlib.EnvRetries, defaultFormatEnvVar}
 var settingsEnvironment map[string]string
 
 func captureSettingsEnvironment() {
@@ -115,6 +117,8 @@ func (s settingsStore) values() ([]settingValue, error) {
 				v.Value, v.Source = "Current directory", "Default"
 			case zlib.EnvRetries:
 				v.Value, v.Source = "3", "Default"
+			case defaultFormatEnvVar:
+				v.Value, v.Source = "Any format", "Default"
 			}
 		}
 		values = append(values, v)
@@ -153,6 +157,17 @@ func validateSetting(key, value string) (string, error) {
 		return "", nil
 	}
 	switch key {
+	case defaultFormatEnvVar:
+		value = strings.ToUpper(strings.TrimPrefix(value, "."))
+		if value == "ANY" {
+			return "", nil
+		}
+		for _, format := range searchFormats {
+			if value == string(format) {
+				return value, nil
+			}
+		}
+		return "", fmt.Errorf("choose a book format such as EPUB or PDF, or leave empty for any format")
 	case zlib.EnvDomain:
 		return zlib.ParseAllowedDomain(value)
 	case zlib.EnvProxy:

@@ -158,6 +158,8 @@ func (m settingsModel) rows() []string {
 		return []string{"Domain", "Proxy URL"}
 	case "download":
 		return []string{"Default directory", "Download retries"}
+	case "search":
+		return []string{"Default format"}
 	case "kindle":
 		return []string{"Kindle address", "From address", "SMTP host", "SMTP port", "SMTP security"}
 	case "domain":
@@ -165,7 +167,7 @@ func (m settingsModel) rows() []string {
 	case "browse":
 		return append([]string{".."}, m.directories...)
 	default:
-		return []string{"Domain", "Proxy URL", "Default directory", "Download retries", "Kindle address", "From address", "SMTP host", "SMTP port", "SMTP security"}
+		return []string{"Domain", "Proxy URL", "Default directory", "Download retries", "Default format", "Kindle address", "From address", "SMTP host", "SMTP port", "SMTP security"}
 	}
 }
 
@@ -342,7 +344,7 @@ func (m *settingsModel) saveKindle(value string) {
 		return
 	}
 	m.kindle = cfg
-	m.values = append(m.values[:4], kindleSettingValues(cfg)...)
+	m.values = append(m.values[:len(settingKeys)], kindleSettingValues(cfg)...)
 	m.back()
 	m.message = "Saved"
 }
@@ -585,8 +587,10 @@ func (m settingsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return m, m.edit(downloadDirEnvVar)
 				case 3:
 					return m, m.edit(zlib.EnvRetries)
+				case 4:
+					return m, m.edit(defaultFormatEnvVar)
 				default:
-					return m, m.edit(kindleSettingKeys[m.cursor-4])
+					return m, m.edit(kindleSettingKeys[m.cursor-len(settingKeys)])
 				}
 			case "network":
 				if m.cursor == 0 {
@@ -602,6 +606,8 @@ func (m settingsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, m.edit(zlib.EnvRetries)
 			case "kindle":
 				return m, m.edit(kindleSettingKeys[m.cursor])
+			case "search":
+				return m, m.edit(defaultFormatEnvVar)
 			case "browse":
 				if count > 0 {
 					m.browse(filepath.Join(m.directory, rows[m.cursor]))
@@ -625,6 +631,8 @@ func (m settingsModel) settingRows(width, available int) []string {
 	case "download":
 		start = 2
 	case "kindle":
+		start = len(settingKeys)
+	case "search":
 		start = 4
 	}
 	labelWidth := min(18, max(12, width-14))
@@ -632,12 +640,12 @@ func (m settingsModel) settingRows(width, available int) []string {
 	section := lipgloss.NewStyle().Foreground(currentTheme.Accent).Bold(true)
 	lines := make([]string, 0, len(labels)+5)
 	selected := 0
+	groups := map[int]string{0: "NETWORK", 2: "DOWNLOADS", 4: "SEARCH", 5: "KINDLE"}
 	for i, label := range labels {
-		if m.page == "home" && (i == 0 || i == 2 || i == 4) {
+		if group := groups[i]; m.page == "home" && group != "" {
 			if i > 0 {
 				lines = append(lines, "")
 			}
-			group := []string{"NETWORK", "DOWNLOADS", "KINDLE"}[i/2]
 			lines = append(lines, section.Render("  "+group))
 		}
 		v := m.values[start+i]
@@ -670,6 +678,8 @@ func (m settingsModel) selectedSetting() settingValue {
 	case "download":
 		index += 2
 	case "kindle":
+		index += len(settingKeys)
+	case "search":
 		index += 4
 	}
 	if index >= 0 && index < len(m.values) {
@@ -728,7 +738,7 @@ func (m settingsModel) View() tea.View {
 	if m.page == "domain" || m.page == "mirror" {
 		return m.domainView(w, h)
 	}
-	titles := map[string]string{"home": "Settings", "network": "Settings / Network", "download": "Settings / Downloads", "kindle": "Settings / Kindle", "browse": "Settings / Choose directory", "edit": "Settings / Edit"}
+	titles := map[string]string{"home": "Settings", "network": "Settings / Network", "download": "Settings / Downloads", "search": "Settings / Search", "kindle": "Settings / Kindle", "browse": "Settings / Choose directory", "edit": "Settings / Edit"}
 	if m.busy {
 		return screenView(w, h, titles[m.page], "", m.spinner.View(), "", uiKey("esc", "back"))
 	}
@@ -736,11 +746,11 @@ func (m settingsModel) View() tea.View {
 	status := m.message
 	controls := []keys.Binding{uiKey("esc", "back"), uiKey("enter", "open"), uiKey("↑/↓", "select"), uiKey("q", "quit")}
 	var lines []string
-	if m.page == "home" || m.page == "network" || m.page == "download" || m.page == "kindle" {
+	if m.page == "home" || m.page == "network" || m.page == "download" || m.page == "kindle" || m.page == "search" {
 		return m.settingsListView(w, h, titles[m.page])
 	} else if m.page == "edit" {
 		v := m.value(m.key)
-		labels := map[string]string{zlib.EnvProxy: "Proxy URL", downloadDirEnvVar: "Download directory", zlib.EnvRetries: "Download retries", kindleToKey: "Kindle address", kindleFromKey: "From address", kindleHostKey: "SMTP host", kindlePortKey: "SMTP port", kindleSecurityKey: "SMTP security"}
+		labels := map[string]string{zlib.EnvProxy: "Proxy URL", downloadDirEnvVar: "Download directory", zlib.EnvRetries: "Download retries", defaultFormatEnvVar: "Default book format (e.g. EPUB or PDF)", kindleToKey: "Kindle address", kindleFromKey: "From address", kindleHostKey: "SMTP host", kindlePortKey: "SMTP port", kindleSecurityKey: "SMTP security"}
 		if v.Override != "" {
 			subtitle = "Using " + v.Override
 		}

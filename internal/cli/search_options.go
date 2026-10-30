@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/heartleo/zlib/internal/zlib"
@@ -14,6 +15,11 @@ type searchFilterValues struct {
 	ToYear     int
 	Exact      bool
 	Order      string
+}
+
+func defaultSearchOptions() *zlib.SearchOptions {
+	opts, _ := searchOptions(searchFilterValues{Extensions: []string{os.Getenv(defaultFormatEnvVar)}})
+	return opts
 }
 
 func searchOptions(values searchFilterValues) (*zlib.SearchOptions, error) {
@@ -38,7 +44,7 @@ func searchOptions(values searchFilterValues) (*zlib.SearchOptions, error) {
 	seen := make(map[zlib.Extension]bool)
 	for _, raw := range values.Extensions {
 		ext := zlib.Extension(strings.ToUpper(strings.TrimPrefix(strings.TrimSpace(raw), ".")))
-		if ext == "" || seen[ext] {
+		if ext == "" || ext == "ANY" || seen[ext] {
 			continue
 		}
 		seen[ext] = true

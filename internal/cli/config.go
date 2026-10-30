@@ -30,7 +30,9 @@ func settingsCommand(name, page, key, description string) *cobra.Command {
 			} else if page == "download" {
 				values = values[2:4]
 			} else if page == "kindle" {
-				values = values[4:]
+				values = values[len(settingKeys):]
+			} else if page == "search" {
+				values = values[4:5]
 			}
 			var output []settingValue
 			for _, v := range values {
@@ -75,7 +77,7 @@ type settingsStart struct {
 func (m settingsStart) Init() tea.Cmd { return m.initial }
 
 func init() {
-	root := settingsCommand("config", "home", "", "View or edit network, download, and Kindle settings")
+	root := settingsCommand("config", "home", "", "View or edit network, search, download, and Kindle settings")
 	root.PersistentFlags().Bool("json", false, "Print settings and their sources as JSON")
 	network := settingsCommand("network", "network", "", "Set domain and proxy")
 	network.AddCommand(settingsCommand("domain", "domain", "", "Set Z-Library domain"), settingsCommand("proxy", "network", zlib.EnvProxy, "Set proxy URL"))
@@ -83,6 +85,21 @@ func init() {
 	download.AddCommand(settingsCommand("directory", "download", downloadDirEnvVar, "Set default download directory"), settingsCommand("retries", "download", zlib.EnvRetries, "Set download retry count"))
 	kindle := settingsCommand("kindle", "kindle", "", "Set Kindle address and SMTP")
 	kindle.AddCommand(settingsCommand("to", "kindle", kindleToKey, "Set Kindle address"), settingsCommand("from", "kindle", kindleFromKey, "Set sender address"), settingsCommand("host", "kindle", kindleHostKey, "Set SMTP host"), settingsCommand("port", "kindle", kindlePortKey, "Set SMTP port"), settingsCommand("security", "kindle", kindleSecurityKey, "Set SMTP security: tls or starttls"))
-	root.AddCommand(network, download, kindle)
+	search := settingsCommand("search", "search", "", "Set search defaults")
+	format := settingsCommand("format [format]", "search", defaultFormatEnvVar, "Set default book format (use any to reset)")
+	showFormat := format.RunE
+	format.Args = cobra.MaximumNArgs(1)
+	format.RunE = func(cmd *cobra.Command, args []string) error {
+		if len(args) == 0 {
+			return showFormat(cmd, args)
+		}
+		store, err := newSettingsStore()
+		if err != nil {
+			return err
+		}
+		return store.save(defaultFormatEnvVar, args[0])
+	}
+	search.AddCommand(format)
+	root.AddCommand(network, download, kindle, search)
 	rootCmd.AddCommand(root)
 }
