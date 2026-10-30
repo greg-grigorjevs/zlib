@@ -79,7 +79,7 @@ the version line. Use `zlib version` to see the full version.
 
 The shell accepts `/search`, `/favorites`, `/recommended`, `/most-popular`,
 `/history`, `/login`, `/logout`, `/profile`, `/doctor`,
-`/config`, `/config network`, `/config download`, `/config kindle`, `/theme`, `/kindle`,
+`/config`, `/config network`, `/config download`, `/config search`, `/config kindle`, `/theme`, `/kindle`,
 `/kindle config`, `/kindle send <file>` and `/quit`. Use `zlib version`
 outside the TUI to check the installed version.
 For automation, use direct commands and their flags, including `--json`.

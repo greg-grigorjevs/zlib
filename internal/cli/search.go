@@ -204,6 +204,9 @@ func searchOptsFromFlags(cmd *cobra.Command) (*zlib.SearchOptions, error) {
 	exts, _ := cmd.Flags().GetStringArray("ext")
 	formats, _ := cmd.Flags().GetStringArray("format")
 	exts = append(exts, formats...)
+	if len(exts) == 0 && !cmd.Flags().Changed("ext") && !cmd.Flags().Changed("format") {
+		exts = []string{os.Getenv(defaultFormatEnvVar)}
+	}
 	from, _ := cmd.Flags().GetInt("from-year")
 	to, _ := cmd.Flags().GetInt("to-year")
 	langs, _ := cmd.Flags().GetStringArray("language")
@@ -224,7 +227,7 @@ func init() {
 	searchCmd.Flags().IntP("count", "n", defaultSearchPageSize, "Results per page")
 	addDestDirFlag(searchCmd)
 	searchCmd.Flags().Bool("send-to-kindle", false, "Send the downloaded book to Kindle")
-	searchCmd.Flags().StringArray("ext", nil, "Filter by file extension, e.g. epub or pdf (repeatable)")
+	searchCmd.Flags().StringArray("ext", nil, "Filter by file extension, e.g. epub or pdf (repeatable; any ignores the saved default)")
 	searchCmd.Flags().StringArray("format", nil, "Alias for --ext")
 	searchCmd.Flags().Int("from-year", 0, "Earliest publication year")
 	searchCmd.Flags().Int("to-year", 0, "Latest publication year")

@@ -23,7 +23,8 @@ func TestSettingsCommandRoutesAndJSON(t *testing.T) {
 		args  []string
 		count int
 	}{
-		{[]string{"config"}, 9}, {[]string{"config", "network"}, 2},
+		{[]string{"config"}, 10}, {[]string{"config", "network"}, 2},
+		{[]string{"config", "search"}, 1}, {[]string{"config", "search", "format"}, 1},
 		{[]string{"config", "network", "domain"}, 1}, {[]string{"config", "network", "proxy"}, 1},
 		{[]string{"config", "download"}, 2}, {[]string{"config", "download", "directory"}, 1},
 		{[]string{"config", "download", "retries"}, 1},
@@ -189,7 +190,7 @@ func TestSettingsSourceAndRedaction(t *testing.T) {
 }
 
 func TestSettingsNavigationCancelAndViewport(t *testing.T) {
-	for _, page := range []string{"home", "network", "download", "kindle", "domain"} {
+	for _, page := range []string{"home", "network", "download", "kindle", "domain", "search"} {
 		for _, size := range [][2]int{{80, 24}, {40, 16}, {32, 12}, {20, 5}} {
 			m, err := newSettingsModel(t.Context(), testSettingsStore(t), page)
 			if err != nil {
@@ -235,7 +236,7 @@ func TestSettingsHomeShowsEveryFieldAndReturnsToSelection(t *testing.T) {
 	for _, size := range [][2]int{{80, 24}, {40, 16}, {32, 12}} {
 		m.width, m.height = size[0], size[1]
 		view := ansi.Strip(m.View().Content)
-		labels := []string{"NETWORK", "Domain", "Proxy URL", "DOWNLOADS", "Default directory", "Download retries", "KINDLE", "Kindle address", "From address", "SMTP host", "SMTP port", "SMTP security"}
+		labels := []string{"NETWORK", "Domain", "Proxy URL", "DOWNLOADS", "Default directory", "Download retries", "SEARCH", "Default format", "KINDLE", "Kindle address", "From address", "SMTP host", "SMTP port", "SMTP security"}
 		if size[1] < 20 {
 			labels = labels[:3]
 		}
@@ -283,7 +284,7 @@ func TestSettingsKindleSaveAndNavigation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	m.cursor = 4
+	m.cursor = len(settingKeys)
 	next, _ := m.Update(key("enter"))
 	m = next.(settingsModel)
 	if m.page != "edit" || m.key != kindleToKey {
@@ -292,7 +293,7 @@ func TestSettingsKindleSaveAndNavigation(t *testing.T) {
 	m.input.SetValue("reader@kindle.com")
 	next, _ = m.Update(key("enter"))
 	m = next.(settingsModel)
-	if m.page != "home" || m.cursor != 4 || m.value(kindleToKey).Value != "reader@kindle.com" {
+	if m.page != "home" || m.cursor != len(settingKeys) || m.value(kindleToKey).Value != "reader@kindle.com" {
 		t.Fatal("Kindle save did not return to selection")
 	}
 	data, err := os.ReadFile(s.kindle)
@@ -366,7 +367,7 @@ func TestSettingsStaleProbeAndDirectorySelection(t *testing.T) {
 }
 
 func TestSettingsEditorsFitAndButtonsSave(t *testing.T) {
-	for _, key := range []string{zlib.EnvProxy, downloadDirEnvVar, zlib.EnvRetries} {
+	for _, key := range []string{zlib.EnvProxy, downloadDirEnvVar, zlib.EnvRetries, defaultFormatEnvVar} {
 		for _, size := range [][2]int{{32, 12}, {40, 16}, {60, 20}, {80, 24}} {
 			m, _ := newSettingsModel(t.Context(), testSettingsStore(t), "home")
 			m.width, m.height = size[0], size[1]

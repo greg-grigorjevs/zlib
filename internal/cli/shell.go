@@ -625,8 +625,8 @@ func (m *shellModel) dispatch(value string) tea.Cmd {
 		if page == "" {
 			page = "home"
 		}
-		if page != "home" && page != "network" && page != "download" && page != "kindle" && page != "domain" {
-			m.setError("Use /config network, /config domain, /config download, or /config kindle")
+		if page != "home" && page != "network" && page != "download" && page != "kindle" && page != "domain" && page != "search" {
+			m.setError("Use /config network, /config domain, /config download, /config search, or /config kindle")
 			return nil
 		}
 		model, err := newSettingsModel(context.Background(), store, page)
@@ -653,10 +653,11 @@ func (m *shellModel) dispatch(value string) tea.Cmd {
 	}
 	switch name {
 	case "search":
+		opts := defaultSearchOptions()
 		if arg == "" {
-			return m.open("search-form", newSearchFilterForm("", nil))
+			return m.open("search-form", newSearchFilterForm("", opts))
 		}
-		return m.open("list", newSearchSelectModel(arg, c, nil, false))
+		return m.open("list", newSearchSelectModel(arg, c, opts, false))
 	case "favorites":
 		return m.open("list", newSavedBooksSelectModel(c.SavedBooks).withBookDetails(c))
 	case "recommended":

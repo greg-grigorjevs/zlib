@@ -53,6 +53,12 @@ func executeRootForTest(t *testing.T, args ...string) (string, error) {
 	rootCmd.SetErr(&errOut)
 	rootCmd.SetArgs(args)
 	t.Cleanup(func() {
+		// Cobra's generated completion commands capture the current output writer.
+		for _, cmd := range rootCmd.Commands() {
+			if cmd.Name() == "completion" {
+				rootCmd.RemoveCommand(cmd)
+			}
+		}
 		rootCmd.SetOut(os.Stdout)
 		rootCmd.SetErr(os.Stderr)
 		rootCmd.SetArgs(nil)

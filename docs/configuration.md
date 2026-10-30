@@ -34,6 +34,8 @@ zlib config network proxy
 zlib config download
 zlib config download directory
 zlib config download retries
+zlib config search
+zlib config search format
 zlib config kindle
 zlib config kindle to
 zlib config kindle from
@@ -42,7 +44,7 @@ zlib config kindle port
 zlib config kindle security
 ```
 
-`zlib config` shows network, download and Kindle settings together. The
+`zlib config` shows network, download, search and Kindle settings together. The
 subcommands open the same TUI at a specific section or field. Use arrow keys
 or Tab to select, Enter to edit, and Esc to return to the selected setting.
 The settings list keeps its controls and save feedback next to the fields;
@@ -69,15 +71,15 @@ For Kindle, Reset clears an address or restores the default SMTP host or port.
 - **Retries:** enter a non-negative integer. Zero disables retries; the default
   is three.
 
-Network and download changes are saved to `~/.config/zlib/.env`, preserving unrelated settings.
+Network, download and search changes are saved to `~/.config/zlib/.env`, preserving unrelated settings.
 Kindle address and SMTP server settings are saved to `~/.config/zlib/kindle.json`.
 The UI reports when process or working-directory settings override a saved
-network or download value. It does not change login cookies. If the SMTP password
+network, download or search value. It does not change login cookies. If the SMTP password
 is missing when you send to Kindle in the TUI, a masked form saves it to the
 global `.env` and sets `ZLIB_SMTP_PWD` for the running process. It is not stored
 in `kindle.json` or shown in the settings list.
 
-Without a terminal, these commands print a read-only summary. Add `--json` for
+Without a terminal, commands without a value print a read-only summary. Add `--json` for
 values, sources and saved preferences; proxy credentials are redacted.
 
 ```sh
@@ -91,10 +93,25 @@ zlib config network proxy --json
 | `ZLIB_PROXY` | HTTP, HTTPS or SOCKS proxy URL | Standard `HTTP_PROXY` / `HTTPS_PROXY` environment settings |
 | `ZLIB_DOWNLOAD_DIR` | Download destination when `--dir` is omitted | Current directory |
 | `ZLIB_DOWNLOAD_RETRIES` | Retries for interrupted downloads and HTTP 502/503/504 | `3` |
+| `ZLIB_DEFAULT_FORMAT` | Book format when no search format is specified | Any format |
 | `ZLIB_THEME` | Override the saved terminal theme | Saved preference |
 | `ZLIB_SMTP_PWD` | SMTP password for Kindle delivery | Unset |
 
 See [env.example](env.example) for sample values.
+
+### Default book format
+
+Save a format once for CLI, TUI and MCP searches:
+
+```sh
+zlib config search format epub
+```
+
+You can also edit **Default format** in `zlib config` or `/config search` in the TUI.
+Search forms start with this format selected; change or deselect it for one search.
+Explicit `--format` or `--ext` flags replace the default. Use `--format any` to
+search all formats once, or `zlib config search format any` to clear the saved default.
+MCP searches can pass `extensions: ["any"]` to ignore the default.
 
 ## Create or edit the global file
 

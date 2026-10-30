@@ -128,7 +128,7 @@ type mcpSearchBooksInput struct {
 	Query      string   `json:"query" jsonschema:"Search keywords (title, author, ISBN, or topic)."`
 	Page       int      `json:"page,omitempty" jsonschema:"Page number starting at 1 (default 1)."`
 	Count      int      `json:"count,omitempty" jsonschema:"Results per page, 1 to 50 (default 10)."`
-	Extensions []string `json:"extensions,omitempty" jsonschema:"Filter by file format, e.g. epub, pdf, mobi, azw3, fb2, txt."`
+	Extensions []string `json:"extensions,omitempty" jsonschema:"Filter by file format, e.g. epub, pdf, mobi, azw3, fb2, txt. Omit to use the saved default format; use [\"any\"] for all formats."`
 	Languages  []string `json:"languages,omitempty" jsonschema:"Filter by language name, e.g. english, chinese."`
 	FromYear   int      `json:"from_year,omitempty" jsonschema:"Earliest publication year (4-digit year, 1000-9999)."`
 	ToYear     int      `json:"to_year,omitempty" jsonschema:"Latest publication year (4-digit year, 1000-9999)."`
@@ -451,8 +451,12 @@ func handleMCPSearchBooks(ctx context.Context, _ *mcp.CallToolRequest, in mcpSea
 }
 
 func searchOptsFromMCPInput(in mcpSearchBooksInput) (*zlib.SearchOptions, error) {
+	exts := in.Extensions
+	if len(exts) == 0 {
+		exts = []string{os.Getenv(defaultFormatEnvVar)}
+	}
 	return searchOptions(searchFilterValues{
-		Extensions: in.Extensions,
+		Extensions: exts,
 		Languages:  in.Languages,
 		FromYear:   in.FromYear,
 		ToYear:     in.ToYear,

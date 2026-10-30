@@ -30,6 +30,10 @@ zlib search "civilized to death" --full-title
 `--ext` is repeatable; `--format` is its alias. `--full-title` prevents title
 truncation in the table. Use `--json --count 10` for [scripts and agents](agents.md).
 
+Save a default with `zlib config search format epub`. It also preselects the
+format in the TUI. Override it with `--format pdf`, or use `--format any` to
+search all formats. Clear the saved default with `zlib config search format any`.
+
 ## Download a result
 
 Copy the complete reference from a result's ID column or JSON `id` field.
