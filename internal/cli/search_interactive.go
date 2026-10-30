@@ -209,7 +209,7 @@ func (m searchSelectModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyPressMsg:
-		if m.err != nil && m.state != searchStateFilter && msg.String() != "r" && msg.String() != "/" && msg.String() != "esc" && msg.String() != "q" && msg.String() != "ctrl+c" {
+		if m.err != nil && m.state != searchStateFilter && msg.String() != "r" && msg.String() != "/" && msg.String() != "ctrl+f" && msg.String() != "esc" && msg.String() != "q" && msg.String() != "ctrl+c" {
 			return m, nil
 		}
 		if m.confirmDownload {
@@ -285,7 +285,7 @@ func (m searchSelectModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						return m, nil
 					}
 				}
-			case "/":
+			case "/", "ctrl+f":
 				if m.feed != nil || m.feedPage != nil {
 					return m, nil
 				}
@@ -334,11 +334,7 @@ func (m searchSelectModel) View() tea.View {
 			title = "Search: " + bookCell(m.query)
 		}
 		if m.feed == nil && m.feedPage == nil {
-			searchKey := "/"
-			if m.inShell {
-				searchKey = "ctrl+f"
-			}
-			v = screenView(m.width, m.height, title, fmt.Sprintf("Could not load page %d", m.retryPage), m.errorBody(), "Retry or change the search", uiKey("r", "retry"), uiKey(searchKey, "search"), uiKey("esc", "back"))
+			v = screenView(m.width, m.height, title, fmt.Sprintf("Could not load page %d", m.retryPage), m.errorBody(), "Retry or change the search", uiKey("r", "retry"), uiKey("ctrl+f", "search"), uiKey("esc", "back"))
 		} else {
 			v = screenView(m.width, m.height, title, "Could not load books", m.errorBody(), "", uiKey("r", "retry"), uiKey("esc", "back"))
 		}
@@ -371,10 +367,8 @@ func (m searchSelectModel) listView() tea.View {
 		}
 		status := pageLabel(m.page, m.totalPages)
 		if m.state == searchStateResults && len(m.books) == 0 {
-			searchKey := "/"
 			exitLabel := "quit"
 			if m.inShell {
-				searchKey = "Ctrl+F"
 				exitLabel = "back"
 			}
 			body := wrapIndented("No books found for this search.", m.width, "  ", lipgloss.NewStyle().Foreground(currentTheme.Title))
@@ -386,7 +380,7 @@ func (m searchSelectModel) listView() tea.View {
 			body = append(body, "")
 			body = append(body, wrapIndented(hint, m.width, "  ", muted)...)
 			return screenView(m.width, m.height, list.feedTitle, status, strings.Join(body, "\n"), "",
-				uiKey(searchKey, "search"), uiKey("q", exitLabel))
+				uiKey("Ctrl+F", "search"), uiKey("q", exitLabel))
 		}
 		status = withFilterSummary(joinStatus(status, m.positionLabel()), chips, m.width)
 		return fullScreenView(m.width, m.height, list.feedViewWith("Author", "No books found.", status, "/ search · ←/→ page · "))

@@ -293,6 +293,26 @@ func TestSearchEmptyAndErrorOfferRecovery(t *testing.T) {
 	}
 }
 
+func TestSearchFooterAdvertisesCtrlF(t *testing.T) {
+	for _, size := range [][2]int{{80, 24}, {40, 16}, {30, 14}} {
+		for _, state := range []string{"results", "empty", "error"} {
+			m := resultsModel("golang")
+			m.width, m.height = size[0], size[1]
+			switch state {
+			case "empty":
+				m.books = nil
+			case "error":
+				m.err = errors.New("request timed out")
+			}
+			lines := strings.Split(ansi.Strip(m.View().Content), "\n")
+			footer := strings.ToLower(lines[len(lines)-1])
+			if !strings.Contains(footer, "ctrl+f") {
+				t.Fatalf("%s footer at %v omits Ctrl+F: %q", state, size, footer)
+			}
+		}
+	}
+}
+
 func TestSearchLoadingShowsOnlySpinner(t *testing.T) {
 	m := resultsModel("golang")
 	m.width, m.height = 80, 24
@@ -325,10 +345,7 @@ func TestSearchLoadingAndEmptyKeepControlsAtBottom(t *testing.T) {
 			}
 			m.state, m.loadingPage, m.totalPages = searchStateResults, 0, 3
 			empty := strings.Split(ansi.Strip(m.View().Content), "\n")
-			searchKey := "/ search"
-			if inShell {
-				searchKey = "Ctrl+F search"
-			}
+			searchKey := "Ctrl+F search"
 			if len(empty) != size[1] || !strings.Contains(empty[len(empty)-1], searchKey) || !strings.Contains(empty[1], "Page 1 of 3") {
 				t.Fatalf("empty search lost page or controls at %v, shell=%v", size, inShell)
 			}
