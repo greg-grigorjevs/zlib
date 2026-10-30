@@ -90,15 +90,16 @@ Existing browser sessions can be [imported as cookies](docs/troubleshooting.md#l
 `zlib tui` opens one persistent shell. Every screen lists its keys at the bottom;
 these cover a first session:
 
-| Key            | Action                                                                       |
-| -------------- | ---------------------------------------------------------------------------- |
-| `/`            | Open the command list: search, favorites, history, profile, settings, themes |
-| `↑/↓` or `j/k` | Select a book                                                                |
-| `←/→`          | Previous or next page of results                                             |
-| `Enter`        | Download the selected book, after a confirmation                             |
-| `Ctrl+F`       | Change the query and filters of the current search                           |
-| `Esc`          | Go back                                                                      |
-| `/quit`        | Exit                                                                         |
+| Key | Action |
+| --- | --- |
+| `/` | Open the command list: search, favorites, history, profile, settings, themes |
+| `↑/↓` or `j/k` | Select a book |
+| `←/→` | Previous or next page of results |
+| `Enter` | Download the selected book, after a confirmation |
+| `Ctrl+K` | Download and send the selected book to Kindle, after a confirmation |
+| `Ctrl+F` | Change the query and filters of the current search |
+| `Esc` | Go back |
+| `/quit` | Exit |
 
 Settings live under `/config` (network, downloads, Kindle). See
 [Terminal interface](docs/tui.md) for every screen and key.

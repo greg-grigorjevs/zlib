@@ -518,7 +518,8 @@ func (m shellModel) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.infoOffset = min(max(0, m.infoOffset), max(0, len(lines)-visible))
 		}
 		if !m.typing && (m.kind == "list" || m.kind == "info" || m.page == nil) && !m.childInputActive() {
-			if !m.standalone && (k.String() == "/" || k.String() == "ctrl+k") {
+			_, bookList := m.page.(searchSelectModel)
+			if !m.standalone && (k.String() == "/" || (k.String() == "ctrl+k" && !bookList)) {
 				m.typing = true
 				m.input.SetValue("/")
 				m.selection = 0
@@ -697,7 +698,9 @@ func (m *shellModel) completed() tea.Cmd {
 	case searchSelectModel:
 		if page.selectedID != "" {
 			id := page.selectedID
+			sendToKindle := page.sendToKindle
 			page.selectedID = ""
+			page.sendToKindle = false
 			page.confirmDownload = false
 			m.previous = page
 			client := page.client
@@ -711,6 +714,7 @@ func (m *shellModel) completed() tea.Cmd {
 				}
 			}
 			m.download = newDownloadModel(id, "", client)
+			m.download.sendOnComplete = sendToKindle
 			return m.chooseDirectory()
 		}
 	case historySelectModel:
@@ -740,13 +744,18 @@ func (m *shellModel) completed() tea.Cmd {
 			m.kindleReturn = nil
 			m.restore()
 			m.setNotice("Download cancelled")
-		} else if page.sendToKindle {
+		} else if page.sendToKindle || page.sendOnComplete {
+			sendOnComplete := page.sendOnComplete
+			page.sendOnComplete = false
 			page.sendToKindle = false
 			page.completeAction = 0
 			m.kindleReturn = new(page)
 			m.kindlePath = page.savedPath
 			if !slices.Contains(kindleAllowedTypes, strings.ToLower(filepath.Ext(page.savedPath))) {
 				return m.returnToDownloadCompletion("Kindle does not support this file type")
+			}
+			if sendOnComplete {
+				return m.sendKindle(page.savedPath)
 			}
 			return m.open("kindle-confirm", shellConfirm{title: "Send to Kindle?", detail: filepath.Base(page.savedPath), action: "Send"})
 		} else {
@@ -756,7 +765,9 @@ func (m *shellModel) completed() tea.Cmd {
 		return nil
 	case shellErrorModel:
 		if page.selectedRetry && page.retry {
+			sendOnComplete := m.download.sendOnComplete
 			m.download = newDownloadModel(m.download.id, m.download.dir, m.download.client)
+			m.download.sendOnComplete = sendOnComplete
 			return m.open("download", m.download)
 		}
 		if m.kindleReturn != nil {
