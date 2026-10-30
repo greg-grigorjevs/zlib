@@ -111,10 +111,7 @@ func (m searchSelectModel) feedViewWith(column, empty, status, navigation string
 		help := navigation + m.exitHint()
 		if strings.Contains(navigation, "/ search") {
 			lines = append(lines, ansi.Truncate("No books found for this search.", width, "…"), ansi.Truncate("Try another title, author, or ISBN.", width, "…"), "")
-			help = "/ search · " + m.exitHint()
-			if m.inShell {
-				help = "Ctrl+F search · " + m.exitHint()
-			}
+			help = "Ctrl+F search · " + m.exitHint()
 			if m.state == searchStateFilter {
 				help = "enter search · esc cancel"
 			}
@@ -194,17 +191,12 @@ func (m searchSelectModel) feedViewWith(column, empty, status, navigation string
 		help = "↑/↓ select · ←/→ page · enter download · " + m.exitHint()
 	}
 	if strings.Contains(navigation, "/ search") {
-		help = "↑/↓ select · ←/→ page · / search · enter download · " + m.exitHint()
-		if m.inShell {
-			help = strings.Replace(help, "/ search", "Ctrl+F search", 1)
-		}
+		help = "↑/↓ select · ←/→ page · Ctrl+F search · enter download · " + m.exitHint()
 	}
 	if width < 70 {
 		switch {
-		case strings.Contains(navigation, "/ search") && m.inShell:
-			help = "↑↓ · enter · Ctrl+F · " + m.exitHint()
 		case strings.Contains(navigation, "/ search"):
-			help = "↑↓ · enter · / · " + m.exitHint()
+			help = "↑↓ · enter · Ctrl+F · " + m.exitHint()
 		case navigation != "":
 			help = "↑↓ · ←→ · enter · " + m.exitHint()
 		default:
@@ -222,6 +214,12 @@ func (m searchSelectModel) feedViewWith(column, empty, status, navigation string
 		help = strings.Replace(help, " · "+m.exitHint(), " · Ctrl+K Kindle · "+m.exitHint(), 1)
 		if ansi.StringWidth(help) > width {
 			help = "enter · Ctrl+K Kindle · " + m.exitHint()
+			if strings.Contains(navigation, "/ search") {
+				help = "enter · Ctrl+F · Ctrl+K · " + m.exitHint()
+				if ansi.StringWidth(help) > width {
+					help = "Ctrl+F · Ctrl+K · " + m.exitHint()
+				}
+			}
 		}
 	}
 	if m.state == searchStateFilter {

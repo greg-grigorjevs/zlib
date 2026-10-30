@@ -71,6 +71,29 @@ func TestSearchViewportAndInlineEditor(t *testing.T) {
 	}
 }
 
+func TestCtrlFReopensDirectSearch(t *testing.T) {
+	for _, state := range []string{"results", "empty", "error"} {
+		t.Run(state, func(t *testing.T) {
+			m := resultsModel("golang")
+			switch state {
+			case "empty":
+				m.books = nil
+			case "error":
+				m.err = fmt.Errorf("search failed")
+			}
+			m = step(m, tea.KeyPressMsg{Code: 'f', Mod: tea.ModCtrl})
+			if m.state != searchStateFilter || m.filter.input.Value() != "golang" {
+				t.Fatal("Ctrl+F did not reopen the current query")
+			}
+			m.filter.input.SetValue("new query")
+			m = step(m, tea.KeyPressMsg{Code: 's', Mod: tea.ModCtrl})
+			if m.query != "new query" || m.state != searchStateLoading {
+				t.Fatal("refined search was not submitted")
+			}
+		})
+	}
+}
+
 func TestEmptySearchCanEditQuery(t *testing.T) {
 	m := resultsModel("no results")
 	m.books = nil
