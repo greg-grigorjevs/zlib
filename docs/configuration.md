@@ -94,6 +94,7 @@ zlib config network proxy --json
 | `ZLIB_DOWNLOAD_DIR` | Download destination when `--dir` is omitted | Current directory |
 | `ZLIB_DOWNLOAD_RETRIES` | Retries for interrupted downloads and HTTP 502/503/504 | `3` |
 | `ZLIB_DEFAULT_FORMAT` | Book format when no search format is specified | Any format |
+| `ZLIB_DEFAULT_LANGUAGES` | Comma-separated book languages when no search language is specified | Any language |
 | `ZLIB_THEME` | Override the saved terminal theme | Saved preference |
 | `ZLIB_SMTP_PWD` | SMTP password for Kindle delivery | Unset |
 
@@ -112,6 +113,21 @@ Search forms start with this format selected; change or deselect it for one sear
 Explicit `--format` or `--ext` flags replace the default. Use `--format any` to
 search all formats once, or `zlib config search format any` to clear the saved default.
 MCP searches can pass `extensions: ["any"]` to ignore the default.
+
+### Default book languages
+
+Save languages for CLI, TUI and MCP searches:
+
+```sh
+zlib config search languages english russian
+```
+
+You can also edit **Default languages** in `zlib config` or `/config search` in the TUI.
+Enter comma-separated names such as `english,russian`. Search forms start with
+these languages selected; change or deselect them for one search.
+Explicit `--language` flags replace the defaults. Use `--language any` to search
+all languages once, or `zlib config search languages any` to clear the saved defaults.
+MCP searches can pass `languages: ["any"]` to ignore the defaults.
 
 ## Create or edit the global file
 

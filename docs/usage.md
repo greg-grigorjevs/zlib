@@ -34,6 +34,10 @@ Save a default with `zlib config search format epub`. It also preselects the
 format in the TUI. Override it with `--format pdf`, or use `--format any` to
 search all formats. Clear the saved default with `zlib config search format any`.
 
+Save default languages with `zlib config search languages english russian`.
+Override them with `--language french` or search all languages with `--language any`.
+Use `zlib config search languages any` to clear the saved defaults.
+
 ## Download a result
 
 Copy the complete reference from a result's ID column or JSON `id` field.

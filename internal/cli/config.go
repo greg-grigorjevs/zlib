@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"encoding/json"
+	"strings"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
@@ -32,7 +33,7 @@ func settingsCommand(name, page, key, description string) *cobra.Command {
 			} else if page == "kindle" {
 				values = values[len(settingKeys):]
 			} else if page == "search" {
-				values = values[4:5]
+				values = values[4:len(settingKeys)]
 			}
 			var output []settingValue
 			for _, v := range values {
@@ -100,6 +101,20 @@ func init() {
 		return store.save(defaultFormatEnvVar, args[0])
 	}
 	search.AddCommand(format)
+	languages := settingsCommand("languages [language ...]", "search", defaultLanguagesEnvVar, "Set default book languages (use any to reset)")
+	showLanguages := languages.RunE
+	languages.Args = cobra.ArbitraryArgs
+	languages.RunE = func(cmd *cobra.Command, args []string) error {
+		if len(args) == 0 {
+			return showLanguages(cmd, args)
+		}
+		store, err := newSettingsStore()
+		if err != nil {
+			return err
+		}
+		return store.save(defaultLanguagesEnvVar, strings.Join(args, ","))
+	}
+	search.AddCommand(languages)
 	root.AddCommand(network, download, kindle, search)
 	rootCmd.AddCommand(root)
 }

@@ -212,6 +212,9 @@ func searchOptsFromFlags(cmd *cobra.Command) (*zlib.SearchOptions, error) {
 	from, _ := cmd.Flags().GetInt("from-year")
 	to, _ := cmd.Flags().GetInt("to-year")
 	langs, _ := cmd.Flags().GetStringArray("language")
+	if len(langs) == 0 && !cmd.Flags().Changed("language") {
+		langs = strings.Split(os.Getenv(defaultLanguagesEnvVar), ",")
+	}
 	exact, _ := cmd.Flags().GetBool("exact")
 	orderRaw, _ := cmd.Flags().GetString("order")
 	return searchOptions(searchFilterValues{
@@ -233,7 +236,7 @@ func init() {
 	searchCmd.Flags().StringArray("format", nil, "Alias for --ext")
 	searchCmd.Flags().Int("from-year", 0, "Earliest publication year")
 	searchCmd.Flags().Int("to-year", 0, "Latest publication year")
-	searchCmd.Flags().StringArray("language", nil, "Filter by language (repeatable)")
+	searchCmd.Flags().StringArray("language", nil, "Filter by language (repeatable; any ignores the saved defaults)")
 	searchCmd.Flags().Bool("exact", false, "Match the query exactly")
 	searchCmd.Flags().String("order", "", "Sort: popular, bestmatch, date, titleA, title, year, filesize, filesizeA")
 	searchCmd.Flags().Bool("full-title", false, "Show full titles in the results table")

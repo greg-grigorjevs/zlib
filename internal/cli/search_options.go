@@ -18,7 +18,10 @@ type searchFilterValues struct {
 }
 
 func defaultSearchOptions() *zlib.SearchOptions {
-	opts, _ := searchOptions(searchFilterValues{Extensions: []string{os.Getenv(defaultFormatEnvVar)}})
+	opts, _ := searchOptions(searchFilterValues{
+		Extensions: []string{os.Getenv(defaultFormatEnvVar)},
+		Languages:  strings.Split(os.Getenv(defaultLanguagesEnvVar), ","),
+	})
 	return opts
 }
 
@@ -50,8 +53,10 @@ func searchOptions(values searchFilterValues) (*zlib.SearchOptions, error) {
 		seen[ext] = true
 		opts.Extensions = append(opts.Extensions, ext)
 	}
+	seenLanguages := make(map[string]bool)
 	for _, raw := range values.Languages {
-		if language := strings.ToLower(strings.TrimSpace(raw)); language != "" {
+		if language := strings.ToLower(strings.TrimSpace(raw)); language != "" && language != "any" && !seenLanguages[language] {
+			seenLanguages[language] = true
 			opts.Languages = append(opts.Languages, zlib.Language(language))
 		}
 	}

@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -16,8 +17,9 @@ import (
 )
 
 const defaultFormatEnvVar = "ZLIB_DEFAULT_FORMAT"
+const defaultLanguagesEnvVar = "ZLIB_DEFAULT_LANGUAGES"
 
-var settingKeys = []string{zlib.EnvDomain, zlib.EnvProxy, downloadDirEnvVar, zlib.EnvRetries, defaultFormatEnvVar}
+var settingKeys = []string{zlib.EnvDomain, zlib.EnvProxy, downloadDirEnvVar, zlib.EnvRetries, defaultFormatEnvVar, defaultLanguagesEnvVar}
 var settingsEnvironment map[string]string
 
 func captureSettingsEnvironment() {
@@ -119,6 +121,8 @@ func (s settingsStore) values() ([]settingValue, error) {
 				v.Value, v.Source = "3", "Default"
 			case defaultFormatEnvVar:
 				v.Value, v.Source = "Any format", "Default"
+			case defaultLanguagesEnvVar:
+				v.Value, v.Source = "Any language", "Default"
 			}
 		}
 		values = append(values, v)
@@ -157,6 +161,21 @@ func validateSetting(key, value string) (string, error) {
 		return "", nil
 	}
 	switch key {
+	case defaultLanguagesEnvVar:
+		if strings.EqualFold(value, "any") {
+			return "", nil
+		}
+		var languages []string
+		for _, raw := range strings.Split(value, ",") {
+			language := strings.ToLower(strings.TrimSpace(raw))
+			if !slices.Contains(searchLanguages, zlib.Language(language)) {
+				return "", fmt.Errorf("choose comma-separated language names such as english,russian, or leave empty for any language")
+			}
+			if !slices.Contains(languages, language) {
+				languages = append(languages, language)
+			}
+		}
+		return strings.Join(languages, ","), nil
 	case defaultFormatEnvVar:
 		value = strings.ToUpper(strings.TrimPrefix(value, "."))
 		if value == "ANY" {

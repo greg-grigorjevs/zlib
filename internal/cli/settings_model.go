@@ -159,7 +159,7 @@ func (m settingsModel) rows() []string {
 	case "download":
 		return []string{"Default directory", "Download retries"}
 	case "search":
-		return []string{"Default format"}
+		return []string{"Default format", "Default languages"}
 	case "kindle":
 		return []string{"Kindle address", "From address", "SMTP host", "SMTP port", "SMTP security"}
 	case "domain":
@@ -167,7 +167,7 @@ func (m settingsModel) rows() []string {
 	case "browse":
 		return append([]string{".."}, m.directories...)
 	default:
-		return []string{"Domain", "Proxy URL", "Default directory", "Download retries", "Default format", "Kindle address", "From address", "SMTP host", "SMTP port", "SMTP security"}
+		return []string{"Domain", "Proxy URL", "Default directory", "Download retries", "Default format", "Default languages", "Kindle address", "From address", "SMTP host", "SMTP port", "SMTP security"}
 	}
 }
 
@@ -589,6 +589,8 @@ func (m settingsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return m, m.edit(zlib.EnvRetries)
 				case 4:
 					return m, m.edit(defaultFormatEnvVar)
+				case 5:
+					return m, m.edit(defaultLanguagesEnvVar)
 				default:
 					return m, m.edit(kindleSettingKeys[m.cursor-len(settingKeys)])
 				}
@@ -607,7 +609,7 @@ func (m settingsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "kindle":
 				return m, m.edit(kindleSettingKeys[m.cursor])
 			case "search":
-				return m, m.edit(defaultFormatEnvVar)
+				return m, m.edit(settingKeys[4+m.cursor])
 			case "browse":
 				if count > 0 {
 					m.browse(filepath.Join(m.directory, rows[m.cursor]))
@@ -640,7 +642,7 @@ func (m settingsModel) settingRows(width, available int) []string {
 	section := lipgloss.NewStyle().Foreground(currentTheme.Accent).Bold(true)
 	lines := make([]string, 0, len(labels)+5)
 	selected := 0
-	groups := map[int]string{0: "NETWORK", 2: "DOWNLOADS", 4: "SEARCH", 5: "KINDLE"}
+	groups := map[int]string{0: "NETWORK", 2: "DOWNLOADS", 4: "SEARCH", len(settingKeys): "KINDLE"}
 	for i, label := range labels {
 		if group := groups[i]; m.page == "home" && group != "" {
 			if i > 0 {
@@ -751,10 +753,14 @@ func (m settingsModel) View() tea.View {
 	} else if m.page == "edit" {
 		v := m.value(m.key)
 		labels := map[string]string{zlib.EnvProxy: "Proxy URL", downloadDirEnvVar: "Download directory", zlib.EnvRetries: "Download retries", defaultFormatEnvVar: "Default book format (e.g. EPUB or PDF)", kindleToKey: "Kindle address", kindleFromKey: "From address", kindleHostKey: "SMTP host", kindlePortKey: "SMTP port", kindleSecurityKey: "SMTP security"}
+		labels[defaultLanguagesEnvVar] = "Default book languages"
 		if v.Override != "" {
 			subtitle = "Using " + v.Override
 		}
 		lines = append(lines, labels[m.key], m.input.View(), "")
+		if m.key == defaultLanguagesEnvVar {
+			lines = append(lines, "Comma-separated names: english,russian", "Empty or any: all languages", "")
+		}
 		if m.key == kindleSecurityKey {
 			lines = append(lines, "tls: SSL/TLS on connect (port 465)", "starttls: upgrade after connect (port 587)", "Empty: follow the port", "")
 		}
