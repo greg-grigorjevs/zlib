@@ -46,6 +46,7 @@ type searchSelectModel struct {
 	selectedID      string // set when user presses Enter
 	confirmDownload bool
 	sendToKindle    bool
+	sendOnly        bool
 	downloadFocused bool
 	err             error
 	retryPage       int
@@ -219,9 +220,11 @@ func (m searchSelectModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "esc", "ctrl+c", "n":
 				m.confirmDownload = false
 				m.sendToKindle = false
+				m.sendOnly = false
 			case "enter":
 				m.confirmDownload = false
-				if m.downloadFocused {
+				if m.sendToKindle || m.downloadFocused {
+					m.sendOnly = m.sendToKindle && !m.downloadFocused
 					m.selectedID = bookCommandID(m.books[m.cursor])
 					return m, tea.Quit
 				}
@@ -281,6 +284,7 @@ func (m searchSelectModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					if id != "" {
 						m.confirmDownload = true
 						m.sendToKindle = msg.String() == "ctrl+k"
+						m.sendOnly = false
 						m.downloadFocused = false
 						return m, nil
 					}
@@ -341,11 +345,11 @@ func (m searchSelectModel) View() tea.View {
 	}
 	if m.confirmDownload {
 		book := m.books[m.cursor]
-		title, action := "Download book?", "Download"
 		if m.sendToKindle {
-			title, action = "Download and send to Kindle?", "Send"
+			v.Content = choiceDialog(v.Content, m.width, m.height, "Send to Kindle?", book.Name, bookCommandID(book), "Send only, or also keep a local copy.", "Send to Kindle", "Send + download", m.downloadFocused, false)
+		} else {
+			v.Content = confirmationDialog(v.Content, m.width, m.height, "Download book?", book.Name, bookCommandID(book), "", "Download", m.downloadFocused, false)
 		}
-		v.Content = confirmationDialog(v.Content, m.width, m.height, title, book.Name, bookCommandID(book), "", action, m.downloadFocused, false)
 		v.AltScreen = true
 	}
 	return fullScreenView(m.width, m.height, v.Content)

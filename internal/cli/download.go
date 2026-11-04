@@ -62,11 +62,20 @@ type kindleResult struct {
 // commands. With --json the plain path always runs, progress goes to stderr,
 // and stdout carries only the downloadResult document.
 func runDownload(m downloadModel, sendToKindle bool, cmd *cobra.Command) error {
+	if m.sendOnly {
+		dir, err := os.MkdirTemp("", "zlib-kindle-*")
+		if err != nil {
+			return err
+		}
+		defer os.RemoveAll(dir)
+		m.dir = dir
+		sendToKindle = true
+	}
 	jsonOut := false
 	if cmd.Flags().Lookup("json") != nil {
 		jsonOut, _ = cmd.Flags().GetBool("json")
 	}
-	if !jsonOut {
+	if !jsonOut && !m.sendOnly {
 		dir, proceed, err := chooseDownloadDirectory(cmd, m.dir)
 		if err != nil {
 			return err
@@ -98,7 +107,7 @@ func runDownload(m downloadModel, sendToKindle bool, cmd *cobra.Command) error {
 		path = abs
 	}
 	result := downloadResult{ID: dm.id, Name: dm.bookName, Path: path, Size: dm.savedSize}
-	if !jsonOut {
+	if !jsonOut && !m.sendOnly {
 		lipgloss.Fprintln(os.Stdout)
 		lipgloss.Fprintf(os.Stdout, "%s Saved to: %s (%d bytes)\n",
 			colorGreen(symbolSuccess),
@@ -112,7 +121,11 @@ func runDownload(m downloadModel, sendToKindle bool, cmd *cobra.Command) error {
 		result.Kindle = &kindleResult{Sent: err == nil, To: to}
 		if err != nil {
 			result.Kindle.Error = err.Error()
-			deliveryErr = &kindleDeliveryError{path: path, err: err}
+			if m.sendOnly {
+				deliveryErr = err
+			} else {
+				deliveryErr = &kindleDeliveryError{path: path, err: err}
+			}
 		}
 	}
 	if jsonOut {
@@ -236,6 +249,7 @@ type downloadModel struct {
 	completeAction int
 	sendToKindle   bool
 	sendOnComplete bool
+	sendOnly       bool
 	kindleMessage  string
 	err            error
 	downloadCh     chan tea.Msg

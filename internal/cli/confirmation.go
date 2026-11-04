@@ -7,6 +7,10 @@ import (
 )
 
 func confirmationDialog(background string, width, height int, title, name, id, note, action string, focused, danger bool) string {
+	return choiceDialog(background, width, height, title, name, id, note, "Cancel", action, focused, danger)
+}
+
+func choiceDialog(background string, width, height int, title, name, id, note, first, second string, focused, danger bool) string {
 	if width == 0 {
 		width = 80
 	}
@@ -25,8 +29,12 @@ func confirmationDialog(background string, width, height int, title, name, id, n
 	if note != "" {
 		lines = append(lines, "", ansi.Truncate(bookCell(note), inner, "…"))
 	}
-	lines = append(lines, "",
-		lipgloss.JoinHorizontal(lipgloss.Top, renderActionButton("Cancel", !focused, false), base.Render("  "), renderActionButton(action, focused, danger)),
+	firstButton, secondButton := renderActionButton(first, !focused, false), renderActionButton(second, focused, danger)
+	buttons := lipgloss.JoinHorizontal(lipgloss.Top, firstButton, base.Render("  "), secondButton)
+	if lipgloss.Width(buttons) > inner {
+		buttons = lipgloss.JoinVertical(lipgloss.Left, firstButton, secondButton)
+	}
+	lines = append(lines, "", buttons,
 		"", "←/→ select · Enter · Esc")
 	content := strings.Join(lines, "\n")
 	dialog := base.Width(inner).Padding(1, 1).Border(lipgloss.RoundedBorder()).BorderForeground(currentTheme.Accent).Render(content)

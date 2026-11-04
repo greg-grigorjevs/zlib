@@ -47,7 +47,9 @@ func runSavedBooks(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		sendToKindle, _ := cmd.Flags().GetBool("send-to-kindle")
-		return runDownload(newDownloadModel(selected.selectedID, dir, c), sendToKindle || selected.sendToKindle, cmd)
+		download := newDownloadModel(selected.selectedID, dir, c)
+		download.sendOnly = selected.sendOnly
+		return runDownload(download, sendToKindle || selected.sendToKindle, cmd)
 	}
 
 	page, _ := cmd.Flags().GetInt("page")

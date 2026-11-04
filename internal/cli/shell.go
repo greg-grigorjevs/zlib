@@ -122,7 +122,13 @@ func newShellStartupModel() shellModel {
 	}
 	return m
 }
-func runShell() error { _, err := tea.NewProgram(newShellStartupModel()).Run(); return err }
+func runShell() error {
+	result, err := tea.NewProgram(newShellStartupModel()).Run()
+	if m, ok := result.(shellModel); ok {
+		m.cleanKindleDownload()
+	}
+	return err
+}
 func (m shellModel) Init() tea.Cmd {
 	if m.page != nil {
 		return shellCmd(m.generation, m.page.Init())
@@ -206,6 +212,7 @@ func (m *shellModel) openInfo(title, content string) {
 	m.status = content
 }
 func (m *shellModel) restore() {
+	m.cleanKindleDownload()
 	if doctor, ok := m.page.(doctorPageModel); ok {
 		doctor.stop()
 	}
@@ -225,10 +232,24 @@ func (m *shellModel) restore() {
 func (m *shellModel) returnToDownloadCompletion(message string) tea.Cmd {
 	page := *m.kindleReturn
 	m.kindleReturn = nil
+	if page.sendOnly {
+		m.restore()
+		if message != "" {
+			m.setNotice(message)
+		}
+		return nil
+	}
 	page.completeAction = 0
 	page.sendToKindle = false
 	page.kindleMessage = message
 	return m.open("download", page)
+}
+
+func (m *shellModel) cleanKindleDownload() {
+	if m.download.sendOnly && m.download.dir != "" {
+		os.RemoveAll(m.download.dir)
+		m.download.dir = ""
+	}
 }
 
 func (m shellModel) contentHeight() int {
@@ -699,8 +720,10 @@ func (m *shellModel) completed() tea.Cmd {
 		if page.selectedID != "" {
 			id := page.selectedID
 			sendToKindle := page.sendToKindle
+			sendOnly := page.sendOnly
 			page.selectedID = ""
 			page.sendToKindle = false
+			page.sendOnly = false
 			page.confirmDownload = false
 			m.previous = page
 			client := page.client
@@ -715,6 +738,17 @@ func (m *shellModel) completed() tea.Cmd {
 			}
 			m.download = newDownloadModel(id, "", client)
 			m.download.sendOnComplete = sendToKindle
+			m.download.sendOnly = sendOnly
+			if sendOnly {
+				dir, err := os.MkdirTemp("", "zlib-kindle-*")
+				if err != nil {
+					m.restore()
+					m.setError("Could not prepare Kindle delivery: " + err.Error())
+					return nil
+				}
+				m.download.dir = dir
+				return m.open("download", m.download)
+			}
 			return m.chooseDirectory()
 		}
 	case historySelectModel:
@@ -766,8 +800,10 @@ func (m *shellModel) completed() tea.Cmd {
 	case shellErrorModel:
 		if page.selectedRetry && page.retry {
 			sendOnComplete := m.download.sendOnComplete
+			sendOnly := m.download.sendOnly
 			m.download = newDownloadModel(m.download.id, m.download.dir, m.download.client)
 			m.download.sendOnComplete = sendOnComplete
+			m.download.sendOnly = sendOnly
 			return m.open("download", m.download)
 		}
 		if m.kindleReturn != nil {

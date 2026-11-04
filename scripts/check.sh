@@ -16,15 +16,25 @@ fail() {
 need() { command -v "$1" >/dev/null 2>&1 || fail "$1 not found. $2"; }
 
 need go "Install the Go release on the go line of go.mod."
-need node "Install Node.js 22 or later (skill sync check)."
-need govulncheck "Run: go install golang.org/x/vuln/cmd/govulncheck@v1.9.0"
-need gitleaks "Install gitleaks 8.19 or later: https://github.com/gitleaks/gitleaks#installing"
 
 # govulncheck checks the standard library of the go that runs it, so a
 # different local toolchain would scan the wrong release.
 want="go$(awk '$1 == "go" { print $2; exit }' go.mod)"
+export GOTOOLCHAIN="$want"
 have=$(go env GOVERSION)
 [ "$have" = "$want" ] || fail "go is $have but go.mod requires $want; scans would check the wrong standard library."
+
+# Git hooks do not necessarily inherit a PATH containing Go-installed tools.
+gobin=$(go env GOBIN)
+if [ -z "$gobin" ]; then
+	gopath=$(go env GOPATH)
+	gobin="${gopath%%:*}/bin"
+fi
+export PATH="$PATH:$gobin"
+
+need node "Install Node.js 22 or later (skill sync check)."
+need govulncheck "Run: go install golang.org/x/vuln/cmd/govulncheck@v1.9.0"
+need gitleaks "Install gitleaks 8.19 or later: https://github.com/gitleaks/gitleaks#installing"
 
 step "gofmt"
 unformatted=$(gofmt -l .)
