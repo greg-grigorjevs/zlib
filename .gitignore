@@ -37,6 +37,8 @@ credentials*.json
 bin/
 # GoReleaser output; untracked files here mark release binaries +dirty
 /dist/
+/result
+/result-*
 *.env
 *.yaml
 !.goreleaser.yaml

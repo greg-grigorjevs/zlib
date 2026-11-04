@@ -19,6 +19,34 @@ Windows (PowerShell):
 winget install --id heartleo.zlib --exact
 ```
 
+## Nix
+
+The flake builds from source on Apple Silicon macOS and on x86-64 and ARM64 Linux.
+The pinned nixpkgs branch no longer supports Intel macOS.
+Enable Nix's `nix-command` and `flakes` experimental features first.
+
+From a checkout of the fork:
+
+```sh
+nix run . -- --help
+nix build .
+./result/bin/zlib version
+```
+
+To install from GitHub, replace `OWNER/REPO` with the fork's repository:
+
+```sh
+nix profile add github:OWNER/REPO
+```
+
+The package is named `zlib-cli`; its executable is `zlib`. Avoid installing it
+alongside another package that provides the same executable.
+Use `nix profile upgrade` to update a profile installation, not `zlib update`.
+
+For package maintenance, run `nix flake check`. After changing Go dependencies,
+update `vendorHash` in `flake.nix` to match the new vendored dependencies. Use
+`nix flake update` to update the pinned nixpkgs input.
+
 ## Install script or binary download
 
 On macOS / Linux:
