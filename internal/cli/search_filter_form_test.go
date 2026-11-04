@@ -19,6 +19,33 @@ func searchFormStep(m searchFilterForm, msg tea.Msg) searchFilterForm {
 	return next.(searchFilterForm)
 }
 
+func TestSearchFilterFormEnterSubmitsFocusedQuery(t *testing.T) {
+	m := newSearchFilterForm("old query", nil)
+	m.input.SetValue("new query")
+	m = searchFormStep(m, key("enter"))
+	if !m.accepted || m.query != "new query" {
+		t.Fatalf("Enter did not submit the edited query: accepted=%v query=%q", m.accepted, m.query)
+	}
+}
+
+func TestSearchFilterFormEnterValidatesFocusedQuery(t *testing.T) {
+	m := newSearchFilterForm("", nil)
+	m = searchFormStep(m, key("enter"))
+	if m.accepted || m.message == "" || m.cursor != 0 || !m.editing {
+		t.Fatalf("empty query should stay focused with a validation error: %+v", m)
+	}
+}
+
+func TestSearchFilterFormEnterAdvancesYearInput(t *testing.T) {
+	m := newSearchFilterForm("books", nil)
+	m = searchFormStep(m, key("tab"))
+	m.input.SetValue("2001")
+	m = searchFormStep(m, key("enter"))
+	if m.accepted || m.yearFrom != "2001" || m.cursor != 2 || !m.editing {
+		t.Fatalf("Enter should save the year and focus the next field: %+v", m)
+	}
+}
+
 func TestSearchFilterFormSelectsEveryEAPIConstraint(t *testing.T) {
 	m := newSearchFilterForm("books", nil)
 	m.yearFrom, m.yearTo = "2001", "2020"

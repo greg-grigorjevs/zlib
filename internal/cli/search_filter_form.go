@@ -200,6 +200,9 @@ func (m searchFilterForm) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "enter":
 			if m.editing {
 				m.finishEdit()
+				if m.cursor == 0 {
+					return m, m.submit()
+				}
 				m.cursor = (m.cursor + 1) % searchFilterFields
 				if m.cursor <= 2 {
 					return m, m.startEdit()
@@ -386,9 +389,13 @@ func (m searchFilterForm) View() tea.View {
 		start := min(max(0, focusEnd-visible+1), focusStart, len(body)-visible)
 		body = body[start : start+visible]
 	}
+	enterHelp := "edit / select"
+	if m.cursor == 0 && m.editing {
+		enterHelp = "search"
+	}
 	return screenView(m.width, m.height, "Search books", "Set filters, then search", strings.Join(body, "\n"),
 		ansi.Truncate(searchFieldHelp[m.cursor], max(1, m.width), "…"),
-		uiKey("ctrl+s", "search"), uiKey("tab", "next"), uiKey("enter", "edit / select"), uiKey("esc", "back"))
+		uiKey("ctrl+s", "search"), uiKey("tab", "next"), uiKey("enter", enterHelp), uiKey("esc", "back"))
 }
 
 // searchLabelWidth is the label column width for filter rows, gap included.
